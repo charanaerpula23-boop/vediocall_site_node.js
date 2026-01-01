@@ -1,36 +1,55 @@
 
 import React, { useEffect, useRef, useState } from 'react';
-import { useLiveChat } from './hooks/useLiveChat';
+import { useMeeting } from './hooks/useMeeting';
 import MessageBubble from './components/MessageBubble';
 
 const App: React.FC = () => {
-  const { status, messages, isMuted, isVideoOff, toggleMute, toggleVideo, connect, disconnect } = useLiveChat();
+  const { 
+    status, 
+    messages, 
+    isMuted, 
+    isVideoOff, 
+    participants, 
+    localStream,
+    toggleMute, 
+    toggleVideo, 
+    joinRoom, 
+    sendMessage,
+    disconnect 
+  } = useMeeting();
+
   const [isSidebarOpen, setSidebarOpen] = useState(true);
   const [roomId, setRoomId] = useState('');
-  const [participantCount, setParticipantCount] = useState(1);
+  const [chatInput, setChatInput] = useState('');
   const userVideoRef = useRef<HTMLVideoElement>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (localStream && userVideoRef.current) {
+      userVideoRef.current.srcObject = localStream;
+    }
+  }, [localStream]);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
 
-  // Update participant count based on connection status
-  useEffect(() => {
-    if (status === 'connected') {
-      setParticipantCount(2); // User + AI
-    } else {
-      setParticipantCount(1); // Just User
-    }
-  }, [status]);
-
   const isConnected = status === 'connected';
+  const participantCount = participants.size + 1; // Peers + Yourself
 
   const handleJoin = () => {
     if (roomId.trim()) {
-      connect(userVideoRef.current!, roomId.trim());
+      joinRoom(roomId.trim());
     } else {
-      alert("Please enter a Room ID to join.");
+      alert("Please enter a Room ID.");
+    }
+  };
+
+  const handleSendChat = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (chatInput.trim()) {
+      sendMessage(chatInput);
+      setChatInput('');
     }
   };
 
@@ -48,18 +67,12 @@ const App: React.FC = () => {
             </span>
           </div>
           {isConnected && (
-            <>
-              <div className="flex items-center gap-2 bg-rose-600/20 px-3 py-1.5 rounded-md border border-rose-500/30">
-                <div className="w-1.5 h-1.5 bg-rose-500 rounded-full" />
-                <span className="text-[10px] uppercase font-bold text-rose-500 tracking-tighter">REC</span>
-              </div>
-              <div className="flex items-center gap-2 bg-indigo-600/20 px-3 py-1.5 rounded-md border border-indigo-500/30">
-                <i className="fa-solid fa-users text-[10px] text-indigo-400" />
-                <span className="text-[10px] uppercase font-bold text-indigo-400">
-                  {participantCount} {participantCount === 1 ? 'Member' : 'Members'}
-                </span>
-              </div>
-            </>
+            <div className="flex items-center gap-2 bg-indigo-600/20 px-3 py-1.5 rounded-md border border-indigo-500/30">
+              <i className="fa-solid fa-users text-[10px] text-indigo-400" />
+              <span className="text-[10px] uppercase font-bold text-indigo-400">
+                {participantCount} {participantCount === 1 ? 'Member' : 'Members'}
+              </span>
+            </div>
           )}
         </div>
 
@@ -68,116 +81,84 @@ const App: React.FC = () => {
           {!isConnected && status !== 'connecting' ? (
             <div className="max-w-md w-full bg-zinc-900/50 backdrop-blur-xl p-8 rounded-3xl border border-white/5 shadow-2xl text-center">
               <div className="w-20 h-20 rounded-2xl bg-indigo-600/20 border border-indigo-500/20 flex items-center justify-center mx-auto mb-8">
-                <i className="fa-solid fa-door-open text-3xl text-indigo-500" />
+                <i className="fa-solid fa-video text-3xl text-indigo-500" />
               </div>
-              <h1 className="text-2xl font-bold mb-2">Join Meeting</h1>
-              <p className="text-zinc-500 text-sm mb-8">Enter a room ID to start a secure AI conference.</p>
+              <h1 className="text-2xl font-bold mb-2">Real-time Video Chat</h1>
+              <p className="text-zinc-500 text-sm mb-8">Enter a room ID to connect with others instantly.</p>
               
               <div className="space-y-4">
-                <div className="relative">
-                  <i className="fa-solid fa-hashtag absolute left-4 top-1/2 -translate-y-1/2 text-zinc-600 text-xs" />
-                  <input 
-                    type="text" 
-                    value={roomId}
-                    onChange={(e) => setRoomId(e.target.value)}
-                    placeholder="ROOM-ID (e.g. ALPHA-9)"
-                    className="w-full bg-black/40 border border-white/10 rounded-xl py-3 pl-10 pr-4 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/50 transition-all uppercase tracking-widest placeholder:text-zinc-700"
-                  />
-                </div>
+                <input 
+                  type="text" 
+                  value={roomId}
+                  onChange={(e) => setRoomId(e.target.value)}
+                  placeholder="ROOM-ID (e.g. ALPHA-9)"
+                  className="w-full bg-black/40 border border-white/10 rounded-xl py-3 px-4 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/50 transition-all uppercase tracking-widest placeholder:text-zinc-700"
+                />
                 <button 
                   onClick={handleJoin}
                   className="w-full bg-indigo-600 hover:bg-indigo-500 text-white py-3 rounded-xl font-bold transition-all shadow-xl shadow-indigo-600/20 flex items-center justify-center gap-2"
                 >
-                  Join Room
-                  <i className="fa-solid fa-arrow-right text-xs" />
+                  Start Meeting
                 </button>
               </div>
             </div>
           ) : (
-            <div className="w-full h-full flex flex-col items-center justify-center">
-              {/* AI Participant Avatar */}
-              <div className="relative w-full max-w-4xl aspect-video bg-zinc-900 rounded-2xl border border-white/5 overflow-hidden flex items-center justify-center group shadow-2xl">
-                <div className="flex flex-col items-center gap-6">
-                  <div className="w-32 h-32 rounded-full bg-gradient-to-br from-indigo-500 via-purple-500 to-pink-500 flex items-center justify-center shadow-2xl shadow-purple-500/20 ring-4 ring-white/5">
-                    <i className="fa-solid fa-sparkles text-5xl text-white" />
+            <div className="w-full h-full grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 items-center justify-center p-4">
+              {/* Local Video */}
+              <div className="relative aspect-video bg-zinc-900 rounded-2xl border border-white/10 overflow-hidden shadow-2xl">
+                <video 
+                  ref={userVideoRef} 
+                  autoPlay 
+                  muted 
+                  playsInline 
+                  className={`w-full h-full object-cover transform scale-x-[-1] ${isVideoOff ? 'hidden' : ''}`} 
+                />
+                {isVideoOff && (
+                  <div className="w-full h-full flex items-center justify-center bg-zinc-900">
+                    <i className="fa-solid fa-user text-4xl text-zinc-700" />
                   </div>
-                  <div className="text-center">
-                    <h2 className="text-xl font-medium text-zinc-100">AI Assistant</h2>
-                    <p className="text-zinc-500 text-sm mt-1">Speaking in {roomId}...</p>
-                  </div>
-                </div>
-                {/* Visualizer bars at bottom of AI feed */}
-                <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex items-end gap-1 h-8">
-                   {[...Array(12)].map((_, i) => (
-                      <div key={i} className={`w-1 bg-indigo-500/40 rounded-full ${isConnected ? 'wave-bar' : ''}`} style={{ height: `${20 + Math.random() * 60}%`, animationDelay: `${i * 0.1}s` }} />
-                   ))}
+                )}
+                <div className="absolute bottom-4 left-4 bg-black/60 px-3 py-1 rounded text-xs font-bold">
+                  You (Host)
                 </div>
               </div>
+
+              {/* Remote Participants */}
+              {Array.from(participants.entries()).map(([peerId, stream]) => (
+                <RemoteVideo key={peerId} stream={stream} peerId={peerId} />
+              ))}
             </div>
           )}
-
-          {/* User Video (PIP) */}
-          <div className={`absolute bottom-28 right-8 w-64 aspect-video bg-zinc-800 rounded-xl border border-white/10 shadow-2xl overflow-hidden z-20 transition-all ${!isConnected ? 'opacity-0 scale-95 pointer-events-none' : 'opacity-100 scale-100'}`}>
-            <video 
-              ref={userVideoRef} 
-              autoPlay 
-              muted 
-              playsInline 
-              className={`w-full h-full object-cover transform ${isVideoOff ? 'hidden' : 'scale-x-[-1]'}`} 
-            />
-            {isVideoOff && (
-              <div className="w-full h-full flex items-center justify-center bg-zinc-900">
-                <div className="w-12 h-12 rounded-full bg-zinc-800 flex items-center justify-center border border-white/5">
-                  <i className="fa-solid fa-user text-zinc-600" />
-                </div>
-              </div>
-            )}
-            <div className="absolute bottom-2 left-2 bg-black/60 px-2 py-0.5 rounded text-[10px] font-bold">
-              You {isMuted && <i className="fa-solid fa-microphone-slash ml-1 text-rose-500" />}
-            </div>
-          </div>
         </div>
 
-        {/* Control Bar (Zoom Style) */}
+        {/* Control Bar */}
         <div className="h-20 bg-zinc-900/90 backdrop-blur-xl border-t border-white/5 flex items-center justify-between px-8 z-40">
            <div className="flex gap-2">
-              <div className="flex flex-col items-center px-4 group cursor-pointer" onClick={() => isConnected && toggleMute()}>
-                <div className={`w-10 h-10 rounded-lg flex items-center justify-center transition-colors ${isMuted ? 'text-rose-500' : 'text-zinc-300 hover:bg-zinc-800'}`}>
-                   <i className={`fa-solid ${isMuted ? 'fa-microphone-slash' : 'fa-microphone'} text-lg`} />
-                </div>
-                <span className="text-[10px] text-zinc-500 font-bold mt-1 group-hover:text-zinc-300 transition-colors uppercase">Mute</span>
-              </div>
-              <div className="flex flex-col items-center px-4 group cursor-pointer" onClick={() => isConnected && toggleVideo()}>
-                <div className={`w-10 h-10 rounded-lg flex items-center justify-center transition-colors ${isVideoOff ? 'text-rose-500' : 'text-zinc-300 hover:bg-zinc-800'}`}>
-                   <i className={`fa-solid ${isVideoOff ? 'fa-video-slash' : 'fa-video'} text-lg`} />
-                </div>
-                <span className="text-[10px] text-zinc-500 font-bold mt-1 group-hover:text-zinc-300 transition-colors uppercase">Video</span>
-              </div>
+              <button onClick={toggleMute} className={`w-12 h-12 rounded-xl flex items-center justify-center transition-colors ${isMuted ? 'bg-rose-600 text-white' : 'bg-zinc-800 text-zinc-300 hover:bg-zinc-700'}`}>
+                <i className={`fa-solid ${isMuted ? 'fa-microphone-slash' : 'fa-microphone'}`} />
+              </button>
+              <button onClick={toggleVideo} className={`w-12 h-12 rounded-xl flex items-center justify-center transition-colors ${isVideoOff ? 'bg-rose-600 text-white' : 'bg-zinc-800 text-zinc-300 hover:bg-zinc-700'}`}>
+                <i className={`fa-solid ${isVideoOff ? 'fa-video-slash' : 'fa-video'}`} />
+              </button>
            </div>
 
            <div className="flex gap-4">
-              <div className="flex flex-col items-center px-4 group cursor-pointer" onClick={() => setSidebarOpen(!isSidebarOpen)}>
-                <div className={`w-10 h-10 rounded-lg flex items-center justify-center transition-colors ${isSidebarOpen ? 'bg-indigo-600/20 text-indigo-400' : 'text-zinc-300 hover:bg-zinc-800'}`}>
-                   <i className="fa-solid fa-message text-lg" />
-                </div>
-                <span className="text-[10px] text-zinc-500 font-bold mt-1 uppercase">Chat</span>
-              </div>
+              <button onClick={() => setSidebarOpen(!isSidebarOpen)} className={`w-12 h-12 rounded-xl flex items-center justify-center transition-colors ${isSidebarOpen ? 'bg-indigo-600 text-white' : 'bg-zinc-800 text-zinc-300 hover:bg-zinc-700'}`}>
+                <i className="fa-solid fa-message" />
+              </button>
               {isConnected && (
                 <button 
-                  onClick={() => {
-                    disconnect();
-                    setRoomId('');
-                  }}
-                  className="bg-rose-600 hover:bg-rose-500 text-white px-6 rounded-lg font-bold text-sm transition-all shadow-lg shadow-rose-600/20"
+                  onClick={() => { disconnect(); setRoomId(''); }}
+                  className="bg-rose-600 hover:bg-rose-500 text-white px-6 rounded-xl font-bold text-sm transition-all"
                 >
                   End Meeting
                 </button>
               )}
            </div>
 
-           <div className="flex items-center gap-2">
-              <span className="text-[10px] text-zinc-500 font-bold uppercase mr-4">
-                {roomId ? `Room ID: ${roomId}` : 'Ready to Join'}
+           <div className="hidden md:block">
+              <span className="text-[10px] text-zinc-500 font-bold uppercase tracking-widest">
+                {roomId ? `Room: ${roomId}` : 'Ready'}
               </span>
            </div>
         </div>
@@ -192,28 +173,48 @@ const App: React.FC = () => {
           </button>
         </div>
         
-        <div className="flex-1 overflow-y-auto p-4 custom-scrollbar bg-black/20">
-          {messages.length === 0 ? (
-            <div className="h-full flex flex-col items-center justify-center opacity-30">
-              <i className="fa-solid fa-comments text-4xl mb-4" />
-              <p className="text-xs font-medium">No messages yet</p>
-            </div>
-          ) : (
-            messages.map((msg) => (
-              <MessageBubble key={msg.id} message={msg} />
-            ))
-          )}
+        <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-black/20">
+          {messages.map((msg) => (
+            <MessageBubble key={msg.id} message={msg} />
+          ))}
           <div ref={messagesEndRef} />
         </div>
 
-        <div className="p-4 border-t border-white/5 bg-zinc-900">
-           <div className="bg-black/50 border border-white/10 rounded-lg p-3 text-[11px] text-zinc-500 italic">
-             {isConnected 
-               ? `Connected to ${roomId}. All transcriptions are saved locally.` 
-               : "Waiting for room connection..."}
-           </div>
-        </div>
+        <form onSubmit={handleSendChat} className="p-4 border-t border-white/5 bg-zinc-900">
+           <input 
+             type="text" 
+             value={chatInput}
+             onChange={(e) => setChatInput(e.target.value)}
+             placeholder="Type a message..."
+             className="w-full bg-black/40 border border-white/10 rounded-lg px-4 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-indigo-500"
+           />
+        </form>
       </aside>
+    </div>
+  );
+};
+
+// Helper component for remote videos
+const RemoteVideo: React.FC<{ stream: MediaStream; peerId: string }> = ({ stream, peerId }) => {
+  const videoRef = useRef<HTMLVideoElement>(null);
+
+  useEffect(() => {
+    if (videoRef.current) {
+      videoRef.current.srcObject = stream;
+    }
+  }, [stream]);
+
+  return (
+    <div className="relative aspect-video bg-zinc-900 rounded-2xl border border-white/10 overflow-hidden shadow-2xl">
+      <video 
+        ref={videoRef} 
+        autoPlay 
+        playsInline 
+        className="w-full h-full object-cover" 
+      />
+      <div className="absolute bottom-4 left-4 bg-black/60 px-3 py-1 rounded text-xs font-bold">
+        User-{peerId.split('-').pop()}
+      </div>
     </div>
   );
 };

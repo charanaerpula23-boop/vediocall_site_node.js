@@ -10,28 +10,23 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({ message }) => {
   const isUser = message.sender === 'user';
 
   return (
-    <div className="mb-4">
-      <div className="flex items-center gap-2 mb-1">
-        <span className={`text-[10px] font-bold uppercase tracking-widest ${isUser ? 'text-indigo-400' : 'text-purple-400'}`}>
-          {isUser ? 'You' : 'Assistant'}
+    <div className={`flex flex-col ${isUser ? 'items-end' : 'items-start'}`}>
+      <div className="flex items-center gap-2 mb-1 px-1">
+        <span className={`text-[10px] font-bold uppercase tracking-widest ${isUser ? 'text-indigo-400' : 'text-zinc-500'}`}>
+          {isUser ? 'You' : 'Participant'}
         </span>
-        <span className="text-[9px] text-zinc-600">
-          {message.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+        <span className="text-[9px] text-zinc-700">
+          {new Date(message.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
         </span>
       </div>
       
       <div className={`
-        text-xs leading-relaxed transition-opacity
-        ${isUser ? 'text-zinc-300' : 'text-zinc-100'}
-        ${!message.isComplete ? 'opacity-70' : 'opacity-100'}
+        max-w-[85%] px-4 py-2 rounded-2xl text-xs leading-relaxed
+        ${isUser 
+          ? 'bg-indigo-600 text-white rounded-tr-none' 
+          : 'bg-zinc-800 text-zinc-100 rounded-tl-none border border-white/5'}
       `}>
-        {message.text || (
-           <div className="flex gap-1 py-1">
-              <div className="w-1 h-1 bg-current rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
-              <div className="w-1 h-1 bg-current rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
-              <div className="w-1 h-1 bg-current rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
-           </div>
-        )}
+        {message.text}
       </div>
     </div>
   );
