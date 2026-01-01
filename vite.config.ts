@@ -13,5 +13,14 @@ export default defineConfig({
   },
   server: {
     port: 3000,
+  },
+  preview: {
+    // Allows the Render host to access the preview server
+    allowedHosts: [
+      'vediocall-site-node-js.onrender.com',
+      '.onrender.com'
+    ],
+    port: 10000,
+    host: '0.0.0.0'
   }
 });

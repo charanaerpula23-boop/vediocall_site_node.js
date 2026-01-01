@@ -6,6 +6,7 @@ import MessageBubble from './components/MessageBubble';
 const App: React.FC = () => {
   const { status, messages, isMuted, isVideoOff, toggleMute, toggleVideo, connect, disconnect } = useLiveChat();
   const [isSidebarOpen, setSidebarOpen] = useState(true);
+  const [roomId, setRoomId] = useState('');
   const userVideoRef = useRef<HTMLVideoElement>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
@@ -14,6 +15,14 @@ const App: React.FC = () => {
   }, [messages]);
 
   const isConnected = status === 'connected';
+
+  const handleJoin = () => {
+    if (roomId.trim()) {
+      connect(userVideoRef.current!, roomId.trim());
+    } else {
+      alert("Please enter a Room ID to join.");
+    }
+  };
 
   return (
     <div className="flex h-screen bg-black text-white font-sans overflow-hidden">
@@ -29,27 +38,48 @@ const App: React.FC = () => {
             </span>
           </div>
           {isConnected && (
-            <div className="flex items-center gap-2 bg-rose-600/20 px-3 py-1.5 rounded-md border border-rose-500/30">
-              <div className="w-1.5 h-1.5 bg-rose-500 rounded-full" />
-              <span className="text-[10px] uppercase font-bold text-rose-500 tracking-tighter">REC</span>
-            </div>
+            <>
+              <div className="flex items-center gap-2 bg-rose-600/20 px-3 py-1.5 rounded-md border border-rose-500/30">
+                <div className="w-1.5 h-1.5 bg-rose-500 rounded-full" />
+                <span className="text-[10px] uppercase font-bold text-rose-500 tracking-tighter">REC</span>
+              </div>
+              <div className="flex items-center gap-2 bg-indigo-600/20 px-3 py-1.5 rounded-md border border-indigo-500/30">
+                <i className="fa-solid fa-users text-[10px] text-indigo-400" />
+                <span className="text-[10px] uppercase font-bold text-indigo-400">2 Members</span>
+              </div>
+            </>
           )}
         </div>
 
         {/* Meeting Stage */}
         <div className="flex-1 flex items-center justify-center p-8 relative">
           {!isConnected && status !== 'connecting' ? (
-            <div className="text-center">
-              <div className="w-24 h-24 rounded-full bg-zinc-900 border border-white/5 flex items-center justify-center mx-auto mb-6 shadow-2xl">
-                <i className="fa-solid fa-video text-4xl text-zinc-700" />
+            <div className="max-w-md w-full bg-zinc-900/50 backdrop-blur-xl p-8 rounded-3xl border border-white/5 shadow-2xl text-center">
+              <div className="w-20 h-20 rounded-2xl bg-indigo-600/20 border border-indigo-500/20 flex items-center justify-center mx-auto mb-8">
+                <i className="fa-solid fa-door-open text-3xl text-indigo-500" />
               </div>
-              <h1 className="text-2xl font-bold mb-4">AI Meeting Room</h1>
-              <button 
-                onClick={() => connect(userVideoRef.current!)}
-                className="bg-indigo-600 hover:bg-indigo-500 text-white px-10 py-3 rounded-lg font-bold transition-all shadow-xl shadow-indigo-600/20"
-              >
-                Join with Video
-              </button>
+              <h1 className="text-2xl font-bold mb-2">Join Meeting</h1>
+              <p className="text-zinc-500 text-sm mb-8">Enter a room ID to start a secure AI conference.</p>
+              
+              <div className="space-y-4">
+                <div className="relative">
+                  <i className="fa-solid fa-hashtag absolute left-4 top-1/2 -translate-y-1/2 text-zinc-600 text-xs" />
+                  <input 
+                    type="text" 
+                    value={roomId}
+                    onChange={(e) => setRoomId(e.target.value)}
+                    placeholder="ROOM-ID (e.g. ALPHA-9)"
+                    className="w-full bg-black/40 border border-white/10 rounded-xl py-3 pl-10 pr-4 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/50 transition-all uppercase tracking-widest placeholder:text-zinc-700"
+                  />
+                </div>
+                <button 
+                  onClick={handleJoin}
+                  className="w-full bg-indigo-600 hover:bg-indigo-500 text-white py-3 rounded-xl font-bold transition-all shadow-xl shadow-indigo-600/20 flex items-center justify-center gap-2"
+                >
+                  Join Room
+                  <i className="fa-solid fa-arrow-right text-xs" />
+                </button>
+              </div>
             </div>
           ) : (
             <div className="w-full h-full flex flex-col items-center justify-center">
@@ -60,8 +90,8 @@ const App: React.FC = () => {
                     <i className="fa-solid fa-sparkles text-5xl text-white" />
                   </div>
                   <div className="text-center">
-                    <h2 className="text-xl font-medium text-zinc-100">AI Colleague</h2>
-                    <p className="text-zinc-500 text-sm mt-1">Speaking...</p>
+                    <h2 className="text-xl font-medium text-zinc-100">AI Assistant</h2>
+                    <p className="text-zinc-500 text-sm mt-1">Speaking in {roomId}...</p>
                   </div>
                 </div>
                 {/* Visualizer bars at bottom of AI feed */}
@@ -75,7 +105,7 @@ const App: React.FC = () => {
           )}
 
           {/* User Video (PIP) */}
-          <div className={`absolute bottom-28 right-8 w-64 aspect-video bg-zinc-800 rounded-xl border border-white/10 shadow-2xl overflow-hidden z-20 transition-all ${!isConnected ? 'opacity-0 scale-95' : 'opacity-100 scale-100'}`}>
+          <div className={`absolute bottom-28 right-8 w-64 aspect-video bg-zinc-800 rounded-xl border border-white/10 shadow-2xl overflow-hidden z-20 transition-all ${!isConnected ? 'opacity-0 scale-95 pointer-events-none' : 'opacity-100 scale-100'}`}>
             <video 
               ref={userVideoRef} 
               autoPlay 
@@ -122,7 +152,10 @@ const App: React.FC = () => {
               </div>
               {isConnected && (
                 <button 
-                  onClick={disconnect}
+                  onClick={() => {
+                    disconnect();
+                    setRoomId('');
+                  }}
                   className="bg-rose-600 hover:bg-rose-500 text-white px-6 rounded-lg font-bold text-sm transition-all shadow-lg shadow-rose-600/20"
                 >
                   End Meeting
@@ -131,7 +164,9 @@ const App: React.FC = () => {
            </div>
 
            <div className="flex items-center gap-2">
-              <span className="text-[10px] text-zinc-500 font-bold uppercase mr-4">Meeting ID: MEET-LIVE-AI</span>
+              <span className="text-[10px] text-zinc-500 font-bold uppercase mr-4">
+                {roomId ? `Room ID: ${roomId}` : 'Ready to Join'}
+              </span>
            </div>
         </div>
       </div>
@@ -161,7 +196,9 @@ const App: React.FC = () => {
 
         <div className="p-4 border-t border-white/5 bg-zinc-900">
            <div className="bg-black/50 border border-white/10 rounded-lg p-3 text-[11px] text-zinc-500 italic">
-             This is a live transcription of your meeting with the AI Assistant.
+             {isConnected 
+               ? `Connected to ${roomId}. All transcriptions are saved locally.` 
+               : "Waiting for room connection..."}
            </div>
         </div>
       </aside>

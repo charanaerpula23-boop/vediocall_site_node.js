@@ -54,7 +54,11 @@ export const useLiveChat = () => {
       frameIntervalRef.current = null;
     }
 
-    processorRef.current?.disconnect();
+    if (processorRef.current) {
+      processorRef.current.disconnect();
+      processorRef.current = null;
+    }
+
     mediaStreamRef.current?.getTracks().forEach(track => track.stop());
     mediaStreamRef.current = null;
     
@@ -64,10 +68,9 @@ export const useLiveChat = () => {
     setStatus('disconnected');
   }, []);
 
-  const connect = useCallback(async (videoElement: HTMLVideoElement) => {
+  const connect = useCallback(async (videoElement: HTMLVideoElement, roomId: string) => {
     try {
       setStatus('connecting');
-      // Cast as string to satisfy GoogleGenAI constructor types
       const ai = new GoogleGenAI({ apiKey: process.env.API_KEY as string });
 
       if (!audioContextsRef.current) {
@@ -89,7 +92,7 @@ export const useLiveChat = () => {
           speechConfig: {
             voiceConfig: { prebuiltVoiceConfig: { voiceName: 'Zephyr' } }
           },
-          systemInstruction: 'You are a professional AI colleague in a Zoom-style meeting. Respond naturally and keep it conversational.',
+          systemInstruction: `You are a professional AI colleague joining a meeting in Room ID: ${roomId}. You can see the user. Greet them by acknowledging the room. Respond naturally and keep it conversational.`,
           outputAudioTranscription: {},
           inputAudioTranscription: {},
         },
@@ -152,7 +155,6 @@ export const useLiveChat = () => {
 
             const modelTurn = message.serverContent?.modelTurn;
             const parts = modelTurn?.parts;
-            // Use strict boolean check to satisfy TS18048
             const audioData = (parts && parts.length > 0) ? parts[0].inlineData?.data : undefined;
             
             if (audioData) {
