@@ -7,12 +7,22 @@ const App: React.FC = () => {
   const { status, messages, isMuted, isVideoOff, toggleMute, toggleVideo, connect, disconnect } = useLiveChat();
   const [isSidebarOpen, setSidebarOpen] = useState(true);
   const [roomId, setRoomId] = useState('');
+  const [participantCount, setParticipantCount] = useState(1);
   const userVideoRef = useRef<HTMLVideoElement>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
+
+  // Update participant count based on connection status
+  useEffect(() => {
+    if (status === 'connected') {
+      setParticipantCount(2); // User + AI
+    } else {
+      setParticipantCount(1); // Just User
+    }
+  }, [status]);
 
   const isConnected = status === 'connected';
 
@@ -45,7 +55,9 @@ const App: React.FC = () => {
               </div>
               <div className="flex items-center gap-2 bg-indigo-600/20 px-3 py-1.5 rounded-md border border-indigo-500/30">
                 <i className="fa-solid fa-users text-[10px] text-indigo-400" />
-                <span className="text-[10px] uppercase font-bold text-indigo-400">2 Members</span>
+                <span className="text-[10px] uppercase font-bold text-indigo-400">
+                  {participantCount} {participantCount === 1 ? 'Member' : 'Members'}
+                </span>
               </div>
             </>
           )}
