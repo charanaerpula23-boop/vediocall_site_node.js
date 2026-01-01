@@ -1,0 +1,8 @@
+{
+  "name": "Gemini Zoom Meet",
+  "description": "A Zoom-inspired real-time AI conferencing app with video streaming, live transcriptions, and meeting controls.",
+  "requestFramePermissions": [
+    "camera",
+    "microphone"
+  ]
+}
