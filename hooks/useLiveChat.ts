@@ -60,6 +60,7 @@ export const useLiveChat = () => {
   const connect = useCallback(async (videoElement: HTMLVideoElement) => {
     try {
       setStatus('connecting');
+      // process.env.API_KEY is defined in vite.config.ts
       const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
 
       if (!audioContextsRef.current) {
@@ -144,7 +145,9 @@ export const useLiveChat = () => {
               transcriptionsRef.current.model = '';
             }
 
-            const audioData = message.serverContent?.modelTurn?.parts[0]?.inlineData?.data;
+            const modelTurn = message.serverContent?.modelTurn;
+            const audioData = modelTurn?.parts?.[0]?.inlineData?.data;
+            
             if (audioData) {
               nextStartTimeRef.current = Math.max(nextStartTimeRef.current, outputCtx.currentTime);
               const buffer = await decodeAudioData(decode(audioData), outputCtx, 24000, 1);

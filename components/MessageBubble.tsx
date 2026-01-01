@@ -13,7 +13,7 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({ message }) => {
     <div className="mb-4">
       <div className="flex items-center gap-2 mb-1">
         <span className={`text-[10px] font-bold uppercase tracking-widest ${isUser ? 'text-indigo-400' : 'text-purple-400'}`}>
-          {isUser ? 'You' : 'Gemini'}
+          {isUser ? 'You' : 'Assistant'}
         </span>
         <span className="text-[9px] text-zinc-600">
           {message.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}

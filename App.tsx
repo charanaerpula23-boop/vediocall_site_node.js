@@ -43,7 +43,7 @@ const App: React.FC = () => {
               <div className="w-24 h-24 rounded-full bg-zinc-900 border border-white/5 flex items-center justify-center mx-auto mb-6 shadow-2xl">
                 <i className="fa-solid fa-video text-4xl text-zinc-700" />
               </div>
-              <h1 className="text-2xl font-bold mb-4">Gemini Meeting Room</h1>
+              <h1 className="text-2xl font-bold mb-4">AI Meeting Room</h1>
               <button 
                 onClick={() => connect(userVideoRef.current!)}
                 className="bg-indigo-600 hover:bg-indigo-500 text-white px-10 py-3 rounded-lg font-bold transition-all shadow-xl shadow-indigo-600/20"
@@ -60,7 +60,7 @@ const App: React.FC = () => {
                     <i className="fa-solid fa-sparkles text-5xl text-white" />
                   </div>
                   <div className="text-center">
-                    <h2 className="text-xl font-medium text-zinc-100">Gemini (AI Colleague)</h2>
+                    <h2 className="text-xl font-medium text-zinc-100">AI Colleague</h2>
                     <p className="text-zinc-500 text-sm mt-1">Speaking...</p>
                   </div>
                 </div>
@@ -131,7 +131,7 @@ const App: React.FC = () => {
            </div>
 
            <div className="flex items-center gap-2">
-              <span className="text-[10px] text-zinc-500 font-bold uppercase mr-4">Meeting ID: GEM-LIVE-AI</span>
+              <span className="text-[10px] text-zinc-500 font-bold uppercase mr-4">Meeting ID: MEET-LIVE-AI</span>
            </div>
         </div>
       </div>
@@ -161,7 +161,7 @@ const App: React.FC = () => {
 
         <div className="p-4 border-t border-white/5 bg-zinc-900">
            <div className="bg-black/50 border border-white/10 rounded-lg p-3 text-[11px] text-zinc-500 italic">
-             This is a live transcription of your meeting with Gemini.
+             This is a live transcription of your meeting with the AI Assistant.
            </div>
         </div>
       </aside>

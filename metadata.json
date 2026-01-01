@@ -1,6 +1,6 @@
 {
-  "name": "Gemini Zoom Meet",
-  "description": "A Zoom-inspired real-time AI conferencing app with video streaming, live transcriptions, and meeting controls.",
+  "name": "AI Video Meet",
+  "description": "A professional real-time AI conferencing app with video streaming, live transcriptions, and meeting controls.",
   "requestFramePermissions": [
     "camera",
     "microphone"
