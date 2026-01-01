@@ -4,8 +4,15 @@ import { GoogleGenAI, Modality, LiveServerMessage } from '@google/genai';
 import { Message, ConnectionStatus } from '../types';
 import { decode, decodeAudioData, createPcmBlob } from '../utils/audioUtils';
 
+// Explicitly declare process for the compiler if types/node hasn't fully propagated
+declare var process: {
+  env: {
+    API_KEY: string;
+  };
+};
+
 const MODEL_NAME = 'gemini-2.5-flash-native-audio-preview-09-2025';
-const FRAME_RATE = 1; // 1 frame per second is sufficient for interaction
+const FRAME_RATE = 1; 
 const JPEG_QUALITY = 0.8;
 
 export const useLiveChat = () => {
@@ -60,8 +67,8 @@ export const useLiveChat = () => {
   const connect = useCallback(async (videoElement: HTMLVideoElement) => {
     try {
       setStatus('connecting');
-      // process.env.API_KEY is defined in vite.config.ts
-      const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+      // Cast as string to satisfy GoogleGenAI constructor types
+      const ai = new GoogleGenAI({ apiKey: process.env.API_KEY as string });
 
       if (!audioContextsRef.current) {
         audioContextsRef.current = {
@@ -82,7 +89,7 @@ export const useLiveChat = () => {
           speechConfig: {
             voiceConfig: { prebuiltVoiceConfig: { voiceName: 'Zephyr' } }
           },
-          systemInstruction: 'You are a professional AI colleague in a Zoom-style meeting. You can see the user. Respond naturally and keep it conversational.',
+          systemInstruction: 'You are a professional AI colleague in a Zoom-style meeting. Respond naturally and keep it conversational.',
           outputAudioTranscription: {},
           inputAudioTranscription: {},
         },
@@ -90,7 +97,6 @@ export const useLiveChat = () => {
           onopen: () => {
             setStatus('connected');
             
-            // Audio Streaming
             const source = inputCtx.createMediaStreamSource(stream);
             const scriptProcessor = inputCtx.createScriptProcessor(4096, 1, 1);
             processorRef.current = scriptProcessor;
@@ -106,12 +112,11 @@ export const useLiveChat = () => {
             source.connect(scriptProcessor);
             scriptProcessor.connect(inputCtx.destination);
 
-            // Video Streaming (Frames)
             const canvas = document.createElement('canvas');
             const ctx = canvas.getContext('2d');
             frameIntervalRef.current = window.setInterval(() => {
               if (isVideoOff || !videoElement.videoWidth) return;
-              canvas.width = videoElement.videoWidth / 2; // Downscale for bandwidth
+              canvas.width = videoElement.videoWidth / 2;
               canvas.height = videoElement.videoHeight / 2;
               ctx?.drawImage(videoElement, 0, 0, canvas.width, canvas.height);
               
@@ -146,7 +151,9 @@ export const useLiveChat = () => {
             }
 
             const modelTurn = message.serverContent?.modelTurn;
-            const audioData = modelTurn?.parts?.[0]?.inlineData?.data;
+            const parts = modelTurn?.parts;
+            // Use strict boolean check to satisfy TS18048
+            const audioData = (parts && parts.length > 0) ? parts[0].inlineData?.data : undefined;
             
             if (audioData) {
               nextStartTimeRef.current = Math.max(nextStartTimeRef.current, outputCtx.currentTime);
